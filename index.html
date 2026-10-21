@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Locked in the lunchroom</title>
+<style>
+:root{
+  --board:#17201b; --board2:#1f2a24; --chalk:#f4f1e8; --dim:#b9c2b4; --line:#5d6b62;
+  --tomato:#ff6b5b; --mustard:#ffc94d; --mint:#5fe0a6; --sky:#5cc4ff; --grape:#c39bff; --peach:#ffa47a; --pink:#ff8fc6; --lime:#c6f06a;
+  --ink:#1b1b1b; --paper:#fffaf0; --kraft:#e9cfa4;
+  --rc:var(--mustard);
+  --disp:"Segoe UI Black","Arial Black","Segoe UI",Carlito,Calibri,system-ui,sans-serif;
+  --body:Calibri,Carlito,"Segoe UI",Candara,"Helvetica Neue",Arial,sans-serif;
+  --mono:Consolas,"Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:24px}
+body{margin:0;min-height:100vh;font-family:var(--body);color:var(--chalk);line-height:1.35;
+  background-color:var(--board);
+  background-image:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.06),transparent 55%),radial-gradient(ellipse at 80% 90%,rgba(255,255,255,.05),transparent 50%),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.012) 0 3px,transparent 3px 9px);
+  background-attachment:fixed;padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:4px solid var(--mustard);outline-offset:3px}
+.disp{font-family:var(--disp);font-weight:900}
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;padding:.35rem .6rem;background:#0e1411;border-bottom:4px dashed var(--line)}
+.brand{font-family:var(--disp);font-weight:900;font-size:.95rem;color:var(--mustard);flex:1 1 9em;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:.3em;border:3px solid var(--line);border-radius:999px;padding:.1em .6em;font-weight:800;font-size:.85rem;background:var(--board2)}
+.tb{background:var(--paper);color:var(--ink);border:0;border-radius:12px;font-weight:900;min-width:52px;min-height:52px;padding:0 .5em;font-size:.9rem}
+main{max-width:1100px;margin:0 auto;padding:.8rem .8rem 3rem;overflow-wrap:break-word}
+/* ---------- shared ---------- */
+.sign{display:flex;align-items:center;gap:.6em;border:4px solid var(--chalk);border-radius:18px;padding:.4em .8em;margin:.3em 0 .7em;background:var(--board2);box-shadow:0 0 0 6px var(--board),0 0 0 9px var(--rc)}
+.sign .ic{font-size:2em;line-height:1}
+.sign .tx{font-family:var(--disp);font-weight:900;font-size:1.2em;line-height:1.15}
+.sign small{display:block;font-family:var(--body);font-weight:700;font-size:.62em;color:var(--dim)}
+.sign.big .tx{font-size:1.6em}
+.panel{border:3px dashed var(--line);border-radius:18px;padding:.6em .9em;margin:.6em 0;background:rgba(255,255,255,.03)}
+.panel.note{border-style:solid;border-color:var(--rc);background:rgba(255,255,255,.05)}
+.chat{display:flex;gap:.5em;align-items:flex-start;margin:.5em 0}
+.chat .av{flex:none;width:2.2em;height:2.2em;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;background:var(--mustard);border:3px solid var(--chalk)}
+.chat .bub{background:var(--paper);color:var(--ink);border-radius:4px 18px 18px 18px;padding:.45em .8em;font-weight:600}
+.chat .bub b{display:block;font-size:.75em;color:#7a5a12}
+.row{display:flex;flex-wrap:wrap;gap:.5em;align-items:center}
+.center{text-align:center}
+.mute{color:var(--dim)}
+.small{font-size:.8em}
+.bb{border:4px solid var(--chalk);background:transparent;border-radius:16px;font-weight:900;min-height:64px;padding:.2em 1em;font-size:1em}
+.bb.go{background:var(--mustard);color:var(--ink);border-color:var(--mustard)}
+.bb.sm{min-height:56px;font-size:.9em}
+.fb{border-radius:14px;padding:.45em .8em;margin:.5em 0;font-weight:800;border:3px solid}
+.fb.ok{border-color:var(--mint);background:rgba(95,224,166,.12)}
+.fb.no{border-color:var(--tomato);background:rgba(255,107,91,.12)}
+.q{font-weight:800;font-size:1.1em;margin:.4em 0}
+.dots{display:flex;gap:.35em;margin:.3em 0}
+.dots i{width:.8em;height:.8em;border-radius:50%;border:3px solid var(--rc)}
+.dots i.on{background:var(--rc)}
+.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.pop{animation:pop .35s}
+@keyframes pop{0%{transform:scale(.7)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+.burst{position:fixed;pointer-events:none;z-index:200;font-size:2rem;animation:fly 1.1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
+#conf{position:fixed;inset:0;pointer-events:none;z-index:300}
+.namebox{font:inherit;width:100%;max-width:18em;border:4px solid var(--chalk);border-radius:14px;padding:.3em .6em;background:var(--paper);color:var(--ink);font-weight:800;min-height:60px}
+/* ---------- start ---------- */
+.menuboard{border:6px solid #6b4a2b;border-radius:22px;background:var(--board2);padding:.8em 1em;box-shadow:inset 0 0 0 3px #3b2a19,0 10px 0 #0b0f0d}
+.menuboard h1{margin:.1em 0;font-family:var(--disp);font-weight:900;font-size:2em;color:var(--mustard);line-height:1.1}
+.menuboard .clock{font-family:var(--mono);font-weight:700;font-size:1.3em;color:var(--tomato)}
+/* ---------- map ---------- */
+.welcome{border:4px solid var(--mint);border-radius:18px;padding:.5em .8em;background:rgba(95,224,166,.1);font-weight:800;margin:.5em 0}
+.zone{margin:1em 0 .3em;font-family:var(--disp);font-weight:900;font-size:1em;color:var(--dim);letter-spacing:.06em}
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(11.5em,1fr));gap:.7em}
+.st{position:relative;text-align:left;border:4px solid var(--sc);border-radius:20px;background:var(--board2);padding:.55em .7em .6em;min-height:7.2em;display:flex;flex-direction:column;gap:.15em;box-shadow:0 7px 0 #0b0f0d}
+.st:active{transform:translateY(3px);box-shadow:0 4px 0 #0b0f0d}
+.st .em{font-size:2.3em;line-height:1}
+.st .nm{font-family:var(--disp);font-weight:900;font-size:1.02em;line-height:1.1}
+.st .sk{font-size:.8em;color:var(--dim);font-weight:700}
+.st .stat{margin-top:auto;align-self:flex-start;border-radius:999px;padding:.05em .6em;font-weight:900;font-size:.8em;background:var(--sc);color:var(--ink)}
+.st.locked .stat{background:transparent;color:var(--sc);border:3px solid var(--sc)}
+.st .teach{position:absolute;top:.35em;right:.45em;font-size:1.2em}
+.st.done{background:repeating-linear-gradient(135deg,var(--board2) 0 14px,rgba(255,255,255,.05) 14px 28px)}
+.st .lt{position:absolute;right:.4em;bottom:.4em;width:1.7em;height:1.7em;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;background:var(--paper);color:var(--ink);font-size:1.1em;transform:rotate(6deg)}
+.tray{display:flex;flex-wrap:wrap;gap:.3em;align-items:center}
+.tray .tl{width:1.6em;height:1.6em;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;background:var(--paper);color:var(--ink)}
+.tray .tl.e{background:transparent;border:3px dashed var(--line);color:var(--line)}
+.exit{display:flex;align-items:center;gap:.6em;width:100%;margin-top:1em;border:5px solid var(--line);border-radius:22px;background:var(--board2);padding:.6em 1em;font-weight:900;font-size:1.05em;min-height:84px;text-align:left}
+.exit.open{border-color:var(--mint);background:rgba(95,224,166,.12)}
+.exit .em{font-size:2em}
+.again{margin-top:1.2em}
+/* ---------- unlocked ---------- */
+.unlock{border:5px solid var(--mint);border-radius:22px;padding:.8em;margin:1em 0;text-align:center;background:rgba(95,224,166,.08)}
+.unlock .big{font-family:var(--disp);font-weight:900;font-size:1.4em;color:var(--mint)}
+.unlock .lt{display:inline-flex;width:2.4em;height:2.4em;border-radius:14px;align-items:center;justify-content:center;background:var(--paper);color:var(--ink);font-family:var(--disp);font-weight:900;font-size:1.8em;margin:.2em 0;transform:rotate(-5deg)}
+/* ---------- 1 fridge ---------- */
+.fridge{display:grid;grid-template-columns:minmax(0,1fr);gap:.6em;background:linear-gradient(180deg,#e8eef2,#c9d3da);border-radius:26px;padding:.8em;border:5px solid #9aa7b0;color:var(--ink);position:relative}
+.fridge:before{content:"";position:absolute;right:.6em;top:1.2em;width:.5em;height:4em;border-radius:6px;background:#8d99a2}
+.fnote{background:#fff59a;border-radius:4px;padding:.6em .8em;box-shadow:0 6px 10px rgba(0,0,0,.18);transform:rotate(-1.2deg);font-weight:700;margin-right:1.2em}
+.fnote .who{font-weight:900;color:#7a5a12}
+.gap{display:inline-block;min-width:5.5em;border-bottom:4px dashed #7a5a12;text-align:center;font-weight:900;padding:0 .2em}
+.gap.filled{border-bottom-style:solid;color:#0b6e3f}
+.magnets{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center}
+.mag{border:0;border-radius:999px;padding:.3em .9em;min-height:64px;font-weight:900;color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.35);transform:rotate(var(--r,0deg))}
+.mag.fall{animation:fall .7s forwards}
+@keyframes fall{to{transform:translateY(60px) rotate(40deg);opacity:0}}
+/* ---------- 2 microwave ---------- */
+.mw{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:.6em;background:#2d3338;border:5px solid #8c969d;border-radius:22px;padding:.7em}
+.mwin{border-radius:16px;background:#101416;border:4px solid #5b666d;padding:.7em;display:flex;flex-direction:column;justify-content:center;gap:.4em;min-height:8em;position:relative;overflow:hidden}
+.mwin.hot{box-shadow:inset 0 0 40px rgba(255,201,77,.6);border-color:var(--mustard)}
+.mdisp{font-family:var(--mono);font-weight:700;background:#05251a;color:#6dffb0;border-radius:10px;padding:.25em .5em;min-height:2em;font-size:.95em;overflow-wrap:anywhere}
+.mkeys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4em}
+.mk{background:#e4e8ea;color:var(--ink);border:0;border-radius:12px;min-height:60px;font-weight:900;font-size:.9em;box-shadow:0 4px 0 #8c969d}
+.mk.on{background:var(--mustard)}
+.mk:active{transform:translateY(2px);box-shadow:0 2px 0 #8c969d}
+@media (max-width:640px){.mw{grid-template-columns:1fr}}
+/* ---------- 3 vending ---------- */
+.vend{background:#b3263a;border:5px solid #6d1422;border-radius:22px;padding:.7em;display:grid;grid-template-columns:minmax(0,1fr);gap:.6em}
+.vscreen{background:#0d1a2a;border:4px solid #2a4a6b;border-radius:12px;padding:.5em .7em;font-weight:800;color:#cfe8ff}
+.vgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45em;background:#e7eef3;border-radius:14px;padding:.5em}
+.vslot{border:3px solid #9fb0bd;border-radius:12px;background:#fff;color:var(--ink);min-height:88px;padding:.3em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1em;font-weight:800;font-size:.85em;line-height:1.1;text-align:center}
+.vslot .code{font-family:var(--mono);font-size:.8em;background:var(--ink);color:#fff;border-radius:6px;padding:0 .35em}
+.vslot .sn{font-size:1.4em}
+.vslot.drop .sn{animation:drop .8s forwards}
+@keyframes drop{60%{transform:translateY(70px)}100%{transform:translateY(70px);opacity:0}}
+.vbin{background:#2b0b12;border-radius:12px;min-height:3em;display:flex;align-items:center;gap:.3em;padding:.3em .6em;font-size:1.4em;flex-wrap:wrap}
+/* ---------- 4 conveyor ---------- */
+.belt{position:relative;height:6.5em;border-radius:18px;background:repeating-linear-gradient(90deg,#3a4540 0 26px,#2c3531 26px 52px);border:4px solid #6f7d75;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.belt.move{animation:belt 1s linear infinite}
+@keyframes belt{to{background-position:52px 0}}
+.item{background:var(--paper);color:var(--ink);border-radius:16px;padding:.35em .9em;font-weight:900;font-size:1.15em;box-shadow:0 6px 0 rgba(0,0,0,.35);animation:slidein .6s ease-out}
+@keyframes slidein{from{transform:translateX(-120%)}to{transform:translateX(0)}}
+.item.out-l{animation:outl .5s forwards}.item.out-r{animation:outr .5s forwards}
+@keyframes outl{to{transform:translate(-60%,140%) rotate(-25deg);opacity:0}}@keyframes outr{to{transform:translate(60%,140%) rotate(25deg);opacity:0}}
+.bins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6em;margin-top:.6em}
+.bin{border:5px solid;border-radius:20px;min-height:110px;font-weight:900;font-size:1.05em;background:var(--board2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em}
+.bin .cnt{font-family:var(--mono);font-size:.85em;color:var(--dim)}
+/* ---------- 5 sandwich ---------- */
+.sand{display:flex;flex-direction:column;align-items:center;gap:.15em;margin:.5em 0}
+.bread{width:min(100%,26em);background:linear-gradient(#e7b56d,#c98a3d);color:var(--ink);border-radius:40px 40px 14px 14px;padding:.55em 1em;font-weight:900;text-align:center;border:4px solid #8a5a22}
+.bread.bot{border-radius:14px 14px 30px 30px}
+.fill{width:min(92%,24em);border-radius:10px;padding:.35em .8em;text-align:center;font-weight:900;color:var(--ink);border:3px dashed var(--line);background:transparent;color:var(--dim)}
+.fill.set{border:0;background:linear-gradient(90deg,#7bd36b,#f15b4c 50%,#ffd35a);color:var(--ink)}
+.choices{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center;margin:.5em 0}
+.ch{border:4px solid var(--rc);background:var(--board2);border-radius:16px;min-height:64px;padding:.2em .9em;font-weight:900;font-size:1em}
+.ch.wrong{border-color:var(--tomato);opacity:.55;text-decoration:line-through}
+.ch.wide{width:min(100%,24em)}
+/* ---------- 6 kettle ---------- */
+.kettle{display:grid;grid-template-columns:7em minmax(0,1fr);gap:.8em;align-items:center}
+.kbody{position:relative;width:7em;height:8.4em;border:6px solid var(--chalk);border-radius:30px 30px 18px 18px;overflow:hidden;background:#0f1512}
+.kwater{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#7fd0ff,#2b8fd6);transition:height .6s}
+.kbody .bub{position:absolute;bottom:.2em;width:.5em;height:.5em;border-radius:50%;background:rgba(255,255,255,.6);animation:rise 1.4s infinite}
+@keyframes rise{to{transform:translateY(-6em);opacity:0}}
+.steam{font-size:1.6em;height:1.4em;text-align:center}
+.ksent{background:var(--paper);color:var(--ink);border-radius:16px;padding:.5em .8em;font-weight:800;font-size:1.05em}
+.ksent .base{color:#8a5a22;font-weight:900}
+@media (max-width:520px){.kettle{grid-template-columns:1fr;justify-items:center}}
+/* ---------- 7 lunchbox ---------- */
+.bento{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45em;background:#d84a6b;border:6px solid #8f2140;border-radius:24px;padding:.5em}
+.comp{background:#fff3f6;color:var(--ink);border-radius:14px;min-height:8em;padding:.4em;display:flex;flex-direction:column;gap:.25em;border:0;align-items:stretch;text-align:center}
+.comp .lab{font-family:var(--disp);font-weight:900;font-size:1em}
+.comp .in{font-size:.78em;font-weight:800;background:#ffd3de;border-radius:8px;padding:.1em .3em}
+.chips{display:flex;flex-wrap:wrap;gap:.45em;justify-content:center;margin:.6em 0}
+.food{border:0;border-radius:14px;padding:.25em .8em;min-height:60px;font-weight:900;color:var(--ink);background:var(--paper);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.food.sel{outline:5px solid var(--mustard);transform:translateY(-3px)}
+@media (max-width:640px){.comp .lab{font-size:.72em;word-break:keep-all;overflow-wrap:normal}.bento{gap:.3em;padding:.35em}.comp{padding:.3em .2em}}
+/* ---------- 8 dishwasher ---------- */
+.dw{background:#cfd6db;border:5px solid #808a91;border-radius:22px;padding:.6em;color:var(--ink)}
+.rack{display:flex;align-items:center;gap:.5em;border-top:6px solid #808a91;padding:.4em .3em;min-height:4em;flex-wrap:wrap}
+.rack .rl{font-family:var(--disp);font-weight:900;font-size:1.35em;width:2.2em;height:2.2em;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;flex:none}
+.rack button.rl{border:0;min-width:64px;min-height:64px}
+.rack .pl{width:3.2em;height:3.2em;border-radius:50%;border:4px solid #8aa0ad;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.6em;font-weight:900;line-height:1.05;padding:.2em}
+.plates{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center;margin:.6em 0}
+.plate{width:5.4em;height:5.4em;border-radius:50%;border:5px solid #b7c6cf;background:#fff;color:var(--ink);font-weight:900;font-size:.9em;line-height:1.1;padding:.2em}
+.plate.sel{border-color:var(--mustard);box-shadow:0 0 0 5px var(--mustard)}
+/* ---------- 9 fruit ---------- */
+.slip{background:var(--paper);color:var(--ink);border-radius:6px;padding:.6em .9em;font-weight:800;font-size:1.1em;border-left:10px solid var(--tomato);margin:.4em 0}
+.slip .ans{display:block;margin-top:.3em;color:#555;font-weight:700}
+.bowl{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center;padding:1em .6em .8em;border-radius:0 0 200px 200px;background:linear-gradient(#8b5a2b,#5e3a17);border:5px solid #3a230d;margin-top:.6em}
+.fruit{border:0;border-radius:50%;width:5.6em;height:5.6em;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:.85em;color:var(--ink);background:var(--fc);box-shadow:inset -8px -8px 0 rgba(0,0,0,.15),0 5px 0 rgba(0,0,0,.35);line-height:1.05}
+.fruit .fe{font-size:1.7em}
+.fruit.no{animation:shake .45s}
+/* ---------- 10 memory ---------- */
+.lfbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5em,1fr));gap:.5em;background:#8b6236;border:6px solid #4f3418;border-radius:18px;padding:.6em}
+.mc{perspective:800px;border:0;background:transparent;padding:0;min-height:8.2em}
+.mc .in{position:relative;width:100%;height:100%;min-height:8.2em;transition:transform .45s;transform-style:preserve-3d}
+.mc.flip .in{transform:rotateY(180deg)}
+.mc .face{position:absolute;inset:0;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:.4em;backface-visibility:hidden;font-weight:800;font-size:.82em;line-height:1.2;text-align:center}
+.mc .back{background:repeating-linear-gradient(45deg,#e9cfa4 0 10px,#dcbc87 10px 20px);color:#6b4a2b;font-size:2.2em}
+.mc .front{transform:rotateY(180deg);background:var(--paper);color:var(--ink);border:4px solid var(--grape)}
+.mc .front.fix{border-color:var(--mint)}
+.mc.got .front{background:#e8ffe9}
+.mc .tag{display:block;font-size:.75em;font-weight:900;color:#7a5a12}
+/* ---------- 11 toaster ---------- */
+.msg{background:var(--paper);color:var(--ink);border-radius:18px 18px 18px 4px;padding:.55em .9em;font-weight:800;margin:.4em 0;max-width:30em}
+.msg b{display:block;font-size:.8em;color:#7a5a12}
+.toaster{position:relative;margin-top:.5em;padding-top:.5em}
+.toasts{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:.5em;position:relative;z-index:1}
+.toast{border:0;border-radius:26px 26px 10px 10px;background:linear-gradient(#f3c37c,#d49546);color:var(--ink);padding:.6em .7em;min-height:7em;font-weight:800;font-size:.92em;box-shadow:inset 0 0 0 6px #b67a33;animation:up .6s ease-out}
+@keyframes up{from{transform:translateY(60px)}to{transform:translateY(0)}}
+.toast.burnt{background:linear-gradient(#5a4130,#2f2219);color:#d9c7b4;text-decoration:line-through}
+.tbody{height:2.4em;border-radius:0 0 30px 30px;background:linear-gradient(#c7cdd2,#8e979d);border:5px solid #6d767c;margin-top:-.8em;position:relative;z-index:2}
+/* ---------- 12/13 teacher ---------- */
+.wb{background:#fdfdfb;color:var(--ink);border:10px solid #9aa3a8;border-radius:12px;padding:.7em 1em;box-shadow:0 8px 0 #0b0f0d}
+.wb h3{margin:.1em 0 .3em;font-family:var(--disp);font-weight:900;color:#1e5fb3}
+.tick{display:flex;align-items:center;gap:.6em;width:100%;text-align:left;border:4px solid var(--line);background:var(--board2);border-radius:16px;min-height:64px;padding:.3em .7em;margin:.35em 0;font-weight:700}
+.tick > span:last-child{overflow-wrap:anywhere;min-width:0}
+.tick .box{flex:none;width:1.5em;height:1.5em;border-radius:8px;border:4px solid var(--chalk);display:flex;align-items:center;justify-content:center;font-weight:900}
+.tick.on{border-color:var(--mint);background:rgba(95,224,166,.12)}
+.tick.on .box{background:var(--mint);border-color:var(--mint);color:var(--ink)}
+.keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4em;max-width:16em;margin:.5em auto}
+.keypad button{min-height:68px;border-radius:16px;border:4px solid var(--chalk);background:var(--board2);font-weight:900;font-size:1.2em}
+.codeshow{display:flex;gap:.4em;justify-content:center;margin:.4em 0}
+.codeshow span{width:1.7em;height:2em;border-radius:10px;border:4px solid var(--mustard);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:1.3em}
+.icom{display:grid;grid-template-columns:minmax(0,1fr);gap:.5em;border:6px solid #b8bdb5;border-radius:22px;background:#2b302c;padding:.6em}
+.grille{height:2em;border-radius:12px;background:repeating-linear-gradient(90deg,#111 0 6px,#555 6px 12px)}
+.ring{display:inline-block;animation:ring 1s infinite}
+@keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}
+/* ---------- door ---------- */
+.dlock{display:flex;flex-wrap:wrap;gap:.8em;justify-content:center;margin:.6em 0}
+.dword{display:flex;gap:.25em}
+.dslot{width:1.6em;height:1.9em;border-radius:10px;border:4px dashed var(--mustard);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:1.3em}
+.dslot.full{border-style:solid;background:var(--paper);color:var(--ink)}
+.cups{display:flex;flex-wrap:wrap;gap:.45em;justify-content:center}
+.cup{width:2.6em;height:3em;border:0;border-radius:6px 6px 22px 22px;background:var(--cc);color:var(--ink);font-family:var(--disp);font-weight:900;font-size:1.3em;box-shadow:inset 0 6px 0 rgba(255,255,255,.35),0 5px 0 rgba(0,0,0,.35)}
+.cup:disabled{opacity:.25}
+.dlock.open .dslot{border-color:var(--mint)}
+@media (max-width:640px){.lfbox{grid-template-columns:repeat(2,minmax(0,1fr))}.mc,.mc .in{min-height:9.5em}.brand{flex-basis:100%;font-size:.8rem}.top .chip{font-size:.7rem}.tb{min-height:48px;min-width:48px;font-size:.75rem}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:520px){.sign .tx{font-size:1.05em}.sign.big .tx{font-size:1.3em}.menuboard h1{font-size:1.5em}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">🥪 Locked in the lunchroom</div>
+  <span class="chip" id="prog" aria-live="polite">🧺 0 of 13</span>
+  <span class="chip" id="clock">⏱️ 0:00</span>
+  <button class="tb" id="bSmall" aria-label="Smaller text">A−</button>
+  <button class="tb" id="bBig" aria-label="Bigger text">A+</button>
+  <button class="tb" id="bMap" aria-label="Back to the lunchroom">🗺️</button>
+</header>
+<main id="main"></main>
+<canvas id="conf"></canvas>
+<script>
+(function(){
+"use strict";
+var KEY = "vu23560_l6_locked_in_the_lunchroom_v1";
+var PHRASE = "CATCHYOULATER";
+var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- helpers ---------- */
+function h(t, a, c){
+  var e = document.createElement(t), k;
+  if(a){ for(k in a){ if(!a.hasOwnProperty(k) || a[k] == null) continue;
+    if(k === "cls") e.className = a[k]; else if(k.indexOf("on") === 0) e.addEventListener(k.slice(2), a[k]); else e.setAttribute(k, a[k]); } }
+  if(c != null){ if(!(c instanceof Array)) c = [c];
+    for(var i = 0; i < c.length; i++){ var x = c[i]; if(x == null || x === false) continue; e.appendChild(typeof x === "string" || typeof x === "number" ? document.createTextNode(String(x)) : x); } }
+  return e;
+}
+function add(p, kids){ if(!(kids instanceof Array)) kids = [kids]; kids.forEach(function(k){ if(k) p.appendChild(k); }); return p; }
+function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function range(n){ var a = []; for(var i = 0; i < n; i++) a.push(i); return a; }
+function pickIdx(n, k){ return shuffle(range(n)).slice(0, k); }
+var LOCKT = 0, LOCKEL = null, TAPEL = null;
+document.addEventListener("click", function(e){ TAPEL = e.target && e.target.closest ? e.target.closest("button") : null; }, true);
+function locked(){ var n = Date.now(); if(TAPEL === LOCKEL && n - LOCKT < 300) return true; LOCKT = n; LOCKEL = TAPEL; return false; }
+function center(e){ var r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+function burst(list, el){
+  if(REDUCED) return; list = list || ["✨", "⭐", "🎉"];
+  var c = el ? center(el) : [innerWidth / 2, innerHeight / 2];
+  for(var i = 0; i < 12; i++){ var a = Math.random() * Math.PI * 2, d = 80 + Math.random() * 150;
+    var s = h("span", {cls:"burst", style:"left:" + c[0] + "px;top:" + c[1] + "px;--dx:" + Math.cos(a) * d + "px;--dy:" + Math.sin(a) * d + "px"}, list[i % list.length]);
+    document.body.appendChild(s); (function(s){ setTimeout(function(){ s.remove(); }, 1200); })(s); }
+}
+function shake(e){ e.classList.remove("shake"); void e.offsetWidth; e.classList.add("shake"); }
+function fb(ok, text){ return h("div", {cls:"fb " + (ok ? "ok" : "no"), role:"status"}, (ok ? "✅ " : "❌ ") + text); }
+function dots(n, of){ var d = h("div", {cls:"dots", "aria-label":n + " of " + of + " done"}); for(var i = 0; i < of; i++) d.appendChild(h("i", {cls:i < n ? "on" : ""})); return d; }
+function hideko(text){ return h("div", {cls:"chat"}, [h("span", {cls:"av", "aria-hidden":"true"}, "👩🏻"), h("div", {cls:"bub"}, [h("b", null, "Hideko, outside the door"), text])]); }
+function sign(icon, text, small, big){ return h("div", {cls:"sign" + (big ? " big" : "")}, [h("span", {cls:"ic", "aria-hidden":"true"}, icon), h("span", {cls:"tx"}, [text, small ? h("small", null, small) : null])]); }
+
+/* ---------- state and saving ---------- */
+function fresh(){ return {v:"start", team:"", t0:0, tEnd:0, size:-1, done:{}, rs:{}, cur:null, door:null}; }
+var S = fresh(), storeOK = false;
+try{ localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); storeOK = true; var raw = localStorage.getItem(KEY); if(raw){ var o = JSON.parse(raw); if(o && o.done && o.rs) S = o; } }catch(e){ storeOK = false; }
+function save(){ if(!storeOK) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+setInterval(save, 1500);
+window.addEventListener("pagehide", save);
+document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") save(); });
+document.addEventListener("click", function(){ setTimeout(save, 0); }, true);
+
+/* ---------- text size ---------- */
+function sizes(){ return innerWidth < 640 ? [28, 34, 42] : [24, 30, 36]; }
+function applySize(){ var s = sizes(); if(S.size < 0 || S.size > 2) S.size = 0; document.documentElement.style.fontSize = s[S.size] + "px"; }
+document.getElementById("bBig").onclick = function(){ if(S.size < 2){ S.size++; applySize(); save(); } };
+document.getElementById("bSmall").onclick = function(){ if(S.size > 0){ S.size--; applySize(); save(); } };
+window.addEventListener("resize", applySize);
+
+/* ---------- clock ---------- */
+function fmt(ms){ var s = Math.max(0, Math.floor(ms / 1000)), m = Math.floor(s / 60); s %= 60; return m + ":" + (s < 10 ? "0" : "") + s; }
+setInterval(function(){ document.getElementById("clock").textContent = "⏱️ " + (S.t0 ? fmt((S.tEnd || Date.now()) - S.t0) : "0:00"); }, 1000);
+
+/* =====================================================================
+   DATA (the right answer is always stored first; the game shuffles it)
+   ===================================================================== */
+var MAGNETS = ["My bad.", "Bummer.", "It is what it is.", "It's an easy fix.", "Happy days!", "Sweet as.", "Catch you later.", "Talk soon,"];
+var MAGCOL = ["#ff6b5b", "#ffc94d", "#5fe0a6", "#5cc4ff", "#c39bff", "#ffa47a", "#ff8fc6", "#c6f06a"];
+var FRIDGE = [
+  {who:"Nam", pre:"", post:" I typed a dot, not an underscore. Sorry!", a:0},
+  {who:"Linda", say:"The library is closed today.", pre:"", post:" Let's go tomorrow.", a:1, you:true},
+  {who:"Jiao", pre:"The college computers are slow, and we can't change that. ", post:"", a:2},
+  {who:"Alan", pre:"Don't worry. Change one letter in the address. ", post:"", a:3},
+  {who:"Yuko", say:"Ms Tran liked my idea!", pre:"", post:" Well done, Yuko!", a:4, you:true},
+  {who:"Shaotian", say:"Can we meet at 1 pm?", pre:"", post:" See you then.", a:5, you:true},
+  {who:"Bella", say:"My bus is here. I have to go.", pre:"OK, Bella. ", post:"", a:6, you:true},
+  {who:"Gang", pre:"Thanks for your help with my email. ", post:" (new line) Gang", a:7, email:true}
+];
+/* pairs that could both fit a note are never shown together */
+var FRIDGE_CLASH = {1:2, 2:1, 4:5, 5:4, 6:7, 7:6};
+var KEYS = ["Shift", "2", "-", "G", "Enter", "Backspace", "Space bar", ".", "Caps Lock", "Tab"];
+var MICRO = [
+  {t:"Type @ in an email address.", k:["Shift", "2"]},
+  {t:"Type _ (an underscore).", k:["Shift", "-"]},
+  {t:"Type a capital G for George.", k:["Shift", "G"]},
+  {t:"Put your name on the next line, under See you later,", k:["Enter"]},
+  {t:"Delete one wrong letter on the left.", k:["Backspace"]},
+  {t:"Make a space between two words.", k:["Space bar"]},
+  {t:"Type the dot in .com.au", k:["."]}
+];
+var VEND = ["New mail", "Sent Items", "Deleted Items", "Junk Email", "Sign out", "Add a subject", "Discard", "Attach", "Inbox"];
+var SNACK = ["🍫", "🥨", "🍪", "🧃", "🍎", "🥤", "🍩", "🧁", "🥜"];
+var VJOBS = [
+  {t:"You want to write a new email to Ms Tran.", a:0}, {t:"You want to check that your email went.", a:1},
+  {t:"You want to find an email you deleted last week.", a:2}, {t:"An email says: You won $500! Click here! Where is it?", a:3},
+  {t:"You finished on a library computer. You want to leave safely.", a:4}, {t:"You want to write what your email is about.", a:5},
+  {t:"You don't want this new message. Throw it away.", a:6}, {t:"You want to add a photo of the café.", a:7},
+  {t:"You want to read new emails from your classmates.", a:8}
+];
+var BELT = [["Reply all", 1], ["Forward", 1], ["Cc", 1], ["Bcc", 1], ["Drafts", 1], ["Send", 1], ["Sent Items", 1],
+  ["Calculator", 0], ["Paint", 0], ["Weather", 0], ["Clock", 0], ["Volume", 0], ["Camera", 0], ["Music", 0]];
+var SANDS = [
+  {top:"We took the bus,", j:1, bot:["it was very slow.", "it is very slow."]},
+  {top:"I went to the café", j:0, bot:["I had a cup of tea.", "I have a cup of tea."]},
+  {top:"I liked the meeting room", j:2, bot:["it was quiet.", "it quiet."]},
+  {top:"Coco visited the library", j:0, bot:["borrowed three books.", "borrow three books."]},
+  {top:"The park was beautiful,", j:1, bot:["it was very hot.", "it were very hot."]},
+  {top:"We walked there", j:2, bot:["the train didn't come.", "the train don't come."]}
+];
+var JOIN = ["and", "but", "because"];
+var KETTLE = [
+  {s:"Last week, Coco ___ to the café.", b:"go", o:["went", "goed", "wented"]},
+  {s:"Yesterday, we ___ the bus to Cammeray.", b:"take", o:["took", "taked", "tooked"]},
+  {s:"Annie ___ a quiet room in the library.", b:"find", o:["found", "finded", "fond"]},
+  {s:"I ___ Ms Tran's reply this morning.", b:"see", o:["saw", "seed", "sawed"]},
+  {s:"Gang ___ lunch at the bakery.", b:"buy", o:["bought", "buyed", "boughted"]},
+  {s:"We ___ a coffee after class.", b:"have", o:["had", "haved", "hadded"]},
+  {s:"Hideko ___ the email at 9 pm.", b:"send", o:["sent", "sended", "sanded"]},
+  {s:"George ___ the subject line.", b:"forget", o:["forgot", "forgetted", "forgots"]},
+  {s:"Ms Tran's reply ___ at lunchtime.", b:"come", o:["came", "comed", "comes"]},
+  {s:"Jane ___ an email to Ms Tran.", b:"write", o:["wrote", "writed", "wroted"]}
+];
+var BENTO = ["How?", "When?", "Where?"];
+var PHR = [["by bus", 0], ["easily", 0], ["on foot", 0], ["quickly", 0],
+  ["on Monday", 1], ["every week", 1], ["at noon", 1], ["after class", 1],
+  ["near the park", 2], ["in Cammeray", 2], ["next to the bank", 2], ["opposite the station", 2]];
+var RACKS = ["on", "at", "in"];
+var PLATES = [["Friday", 0], ["5 March", 0], ["the weekend", 0], ["Tuesday afternoon", 0],
+  ["12:30 pm", 1], ["lunchtime", 1], ["8 am", 1], ["night", 1],
+  ["the morning", 2], ["the evening", 2], ["two minutes", 2], ["December", 2]];
+var FRUITW = ["When", "How long", "How much", "Where", "How", "Who"];
+var FRUITE = ["🍎", "🍌", "🍇", "🍊", "🍐", "🍓"];
+var FRUITC = ["#ff7b6b", "#ffe066", "#c39bff", "#ffad5c", "#b8e986", "#ff8fb1"];
+var FRUITQ = [
+  {q:"___ is the café?", a:"It's next to the bank.", k:3}, {q:"___ is a coffee there?", a:"It's five dollars.", k:2},
+  {q:"___ does it take to walk there?", a:"About ten minutes.", k:1}, {q:"___ can we get there?", a:"By bus. The 144 stops outside.", k:4},
+  {q:"___ can we meet?", a:"On Friday after class.", k:0}, {q:"___ is your teacher?", a:"Ms Tran.", k:5},
+  {q:"___ does the library close?", a:"At 6 pm.", k:0}, {q:"___ is the bus stop?", a:"Opposite the park.", k:3}
+];
+var PAIRS = [
+  ["My email isn't in Sent Items. It's in Drafts.", "Open Drafts. Open the email and click Send."],
+  ["I got an email. It says Undeliverable.", "Check the address. Fix it and send it again."],
+  ["I can't find the Send button.", "Look at the top of the new message."],
+  ["I forgot my password.", "Ask your teacher. Don't tell a friend."],
+  ["I finished on a library computer.", "Sign out and close the browser."],
+  ["I typed the subject in the To box.", "Delete it. Type it in Add a subject."]
+];
+var TOAST = [
+  {m:"Good idea! What time does the café open?", o:["Thanks! It opens at 7 am.", "Thanks! The coffee is really good.", "Dear Ms Tran, I am writing to inform you of the time."]},
+  {m:"I like the park idea. Can we walk there?", o:["Thanks! Yes, we can. It's ten minutes on foot.", "Yes.", "The park has big trees and a pond."]},
+  {m:"Sounds great! How much is lunch there?", o:["Thanks! It's about twelve dollars.", "It's open every day from 8 am.", "hey teacher its cheap lol"]},
+  {m:"Nice choice. When does the class start?", o:["Thanks! It starts on 4 November.", "Thanks! It's in Crows Nest.", "Yours sincerely, Nam"]},
+  {m:"Great! Where is it?", o:["Thanks! It's next to Crows Nest Station.", "Thanks! It's at 10 am.", "No worries. It's a fun place."]}
+];
+var WB = ["Ms Tran's address in the To box: tran_k@harbourmail.com.au", "A short subject, for example: Lunch idea", "Hi Ms Tran, and How's it going?",
+  "Where the place is", "How we can get there: by bus, on foot ...", "Why it's good: ... because ...",
+  "A compound sentence in the past: I went there ... and ...", "One simple question: Do you like my idea?", "A friendly closing, and your name on the next line"];
+var ICOMQ = [
+  {t:"You can't find Send.", o:["I can't find the Send button. Where is it on this screen?", "Send. Where.", "This computer is bad."]},
+  {t:"Ms Tran didn't get your email.", o:["Ms Tran didn't get my email. Can you check the address with me?", "Email no.", "I don't like email."]},
+  {t:"You forgot your password.", o:["I forgot my password. Can you help me, please?", "Password!", "Give me your password, please."]}
+];
+var ICALL = ["Partner A says a problem and asks a question. Partner B helps. Then change.",
+  "Spell your email address with the keys: for example, Shift and 2 for @.",
+  "Ask your partner a When question. Answer with on, at or in.",
+  "Your teacher says: Great idea! How much is it? Say thanks. Then answer the question.",
+  "Use two expressions from Lesson 6 in your talk."];
+
+/* ---------- room registry ---------- */
+var ROOMS = [];
+function room(o){ ROOMS.push(o); }
+function byId(id){ for(var i = 0; i < ROOMS.length; i++) if(ROOMS[i].id === id) return ROOMS[i]; return null; }
+function doneN(){ var n = 0; ROOMS.forEach(function(r){ if(S.done[r.id]) n++; }); return n; }
+function rs(id){ if(!S.rs[id]) S.rs[id] = {}; return S.rs[id]; }
+function started(r){ var s = S.rs[r.id]; return !!(s && s.n); }
+
+/* =====================================================================
+   1 THE FRIDGE: expressions in real situations
+   ===================================================================== */
+room({id:"fridge", name:"The fridge", emoji:"🧊", col:"#5cc4ff", letter:"C", zone:0, skill:"Expressions",
+ init:function(st){ st.seq = pickIdx(FRIDGE.length, 6); st.opts = st.seq.map(function(k){ var a = FRIDGE[k].a; var others = shuffle(range(MAGNETS.length).filter(function(x){ return x !== a && x !== FRIDGE_CLASH[a]; })).slice(0, 2); return shuffle([a].concat(others)); }); st.i = 0; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("The fridge door has notes from your classmates. Each note has a gap. Put the right magnet in the gap. 🧲"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var F = FRIDGE[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var gap = h("span", {cls:"gap"}, "?");
+    var note = h("div", {cls:"fnote"}, [
+      F.say ? h("div", null, [h("span", {cls:"who"}, F.who + ": "), F.say]) : null,
+      h("div", null, [h("span", {cls:"who"}, (F.you ? "You" : F.email ? "Gang's email" : F.who) + ": "), F.pre, gap, F.post])]);
+    var mags = h("div", {cls:"magnets"});
+    st.opts[st.i].forEach(function(m, j){
+      var b = h("button", {cls:"mag", style:"background:" + MAGCOL[m] + ";--r:" + ((j - 1) * 3) + "deg"}, MAGNETS[m]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(m === F.a){ st.busy = true; gap.textContent = MAGNETS[m]; gap.classList.add("filled"); b.style.visibility = "hidden"; burst(["🧲", "✨", "⭐"], gap);
+          f.appendChild(fb(true, "Yes! It fits.")); st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 1200); }
+        else { b.classList.add("fall"); f.appendChild(fb(false, "That magnet falls off. Read the note again.")); setTimeout(function(){ b.remove(); }, 700); } };
+      mags.appendChild(b);
+    });
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"fridge"}, [note, mags]), f]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   2 THE MICROWAVE: the keyboard
+   ===================================================================== */
+room({id:"micro", name:"The microwave", emoji:"📟", col:"#ffc94d", letter:"A", zone:0, skill:"The keyboard",
+ init:function(st){ st.seq = pickIdx(MICRO.length, 5); st.keys = shuffle(range(KEYS.length)); st.i = 0; st.n = 0; st.press = []; },
+ render:function(el, st, win){
+  add(el, hideko("The microwave is a keyboard! Read the job. Press the keys you need. Then press Start. 🔥"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var M = MICRO[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var disp = h("div", {cls:"mdisp", "aria-live":"polite"});
+    var win2 = h("div", {cls:"mwin"}, [h("div", {cls:"small mute"}, "Job " + (st.i + 1) + " of " + st.seq.length), h("div", {cls:"q", style:"margin:0"}, "🍲 " + M.t), disp]);
+    function draw(){ disp.textContent = st.press.length ? st.press.join("  +  ") : "Press the keys ..."; keysEl.querySelectorAll(".mk").forEach(function(b){ b.classList.toggle("on", st.press.indexOf(b.getAttribute("data-k")) > -1); }); }
+    var keysEl = h("div", {cls:"mkeys"});
+    st.keys.forEach(function(k){ var name = KEYS[k];
+      keysEl.appendChild(h("button", {cls:"mk", "data-k":name, onclick:function(){ if(locked() || st.busy) return; var p = st.press.indexOf(name); if(p > -1) st.press.splice(p, 1); else if(st.press.length < 3) st.press.push(name); f.innerHTML = ""; save(); draw(); }}, name)); });
+    var ctl = h("div", {cls:"row", style:"margin-top:.5em"}, [
+      h("button", {cls:"bb go", onclick:function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        var ok = st.press.length === M.k.length && M.k.every(function(k){ return st.press.indexOf(k) > -1; });
+        if(ok){ st.busy = true; win2.classList.add("hot"); burst(["🔔", "✨", "🍲"], win2); f.appendChild(fb(true, "Ding! " + M.k.join(" + ") + ". That's right."));
+          st.i++; st.n++; st.press = []; save(); setTimeout(function(){ st.busy = false; step(); }, 1400); }
+        else { shake(win2); f.appendChild(fb(false, st.press.length ? "No ding. Check the keys. Do you need Shift?" : "Press some keys first.")); } }}, "▶ Start"),
+      h("button", {cls:"bb sm", onclick:function(){ st.press = []; f.innerHTML = ""; save(); draw(); }}, "Clear")]);
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"mw"}, [h("div", null, [win2, ctl]), keysEl]), f]);
+    draw();
+  }
+  step();
+ }});
+
+/* =====================================================================
+   3 THE VENDING MACHINE: real student email names
+   ===================================================================== */
+room({id:"vend", name:"The vending machine", emoji:"🥤", col:"#ff6b5b", letter:"T", zone:2, skill:"Your real student email",
+ init:function(st){ st.seq = pickIdx(VJOBS.length, 6); st.slots = shuffle(range(VEND.length)); st.i = 0; st.n = 0; st.got = []; },
+ render:function(el, st, win){
+  add(el, hideko("The vending machine has the names from your real student email. Read the job. Choose the right button. Get a snack! 🍫"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var J = VJOBS[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var grid = h("div", {cls:"vgrid"});
+    st.slots.forEach(function(v, p){
+      var code = "ABC".charAt(Math.floor(p / 3)) + (p % 3 + 1);
+      var b = h("button", {cls:"vslot", "aria-label":code + " " + VEND[v]}, [h("span", {cls:"code"}, code), h("span", {cls:"sn", "aria-hidden":"true"}, SNACK[v]), VEND[v]]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(v === J.a){ st.busy = true; b.classList.add("drop"); st.got.push(SNACK[v]); burst(["🍫", "🍪", "✨"], b); f.appendChild(fb(true, VEND[v] + ". Your snack drops down!"));
+          st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 1300); }
+        else { shake(b); f.appendChild(fb(false, "That is " + VEND[v] + ". No snack. Try again.")); } };
+      grid.appendChild(b);
+    });
+    var bin = h("div", {cls:"vbin", "aria-label":"Snacks you got"}, st.got.length ? st.got.join(" ") : h("span", {cls:"small mute"}, "Your snacks come out here"));
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"vend"}, [h("div", {cls:"vscreen"}, "💡 " + J.t), grid, bin]), f]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   4 THE TRAY BELT: email program or not?
+   ===================================================================== */
+room({id:"belt", name:"The tray belt", emoji:"📥", col:"#5fe0a6", letter:"C", zone:2, skill:"Email or not?",
+ init:function(st){ var e = shuffle(range(7)).slice(0, 5), x = shuffle(range(7, 14)).slice(0, 5); st.seq = shuffle(e.concat(x)); st.i = 0; st.n = 0; st.c = [0, 0]; },
+ render:function(el, st, win){
+  add(el, hideko("Trays come along the belt. Is it part of an email program? Put it in the right bin. 📧"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var B = BELT[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var item = h("div", {cls:"item"}, B[0]);
+    var belt = h("div", {cls:"belt move"}, item);
+    setTimeout(function(){ belt.classList.remove("move"); }, 700);
+    function go(isMail, btn){ if(locked() || st.busy) return; f.innerHTML = "";
+      if((isMail ? 1 : 0) === B[1]){ st.busy = true; item.classList.add(isMail ? "out-l" : "out-r"); st.c[isMail ? 0 : 1]++; burst(isMail ? ["📧", "✨"] : ["🗑️", "✨"], btn);
+        f.appendChild(fb(true, B[0] + (B[1] ? " is part of an email program." : " is not in an email program.")));
+        st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 900); }
+      else { shake(item); f.appendChild(fb(false, "Look again. Do you see " + B[0] + " in Harbour Mail or your student email?")); } }
+    var b1 = h("button", {cls:"bin", style:"border-color:var(--sky)", onclick:function(){ go(true, b1); }}, ["📧 Email program", h("span", {cls:"cnt"}, String(st.c[0]))]);
+    var b2 = h("button", {cls:"bin", style:"border-color:var(--peach)", onclick:function(){ go(false, b2); }}, ["🚫 Not email", h("span", {cls:"cnt"}, String(st.c[1]))]);
+    add(box, [h("div", {cls:"small mute"}, "Tray " + (st.i + 1) + " of " + st.seq.length), belt, h("div", {cls:"bins"}, [b1, b2]), f]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   5 THE SANDWICH BAR: compound sentences in the past
+   ===================================================================== */
+room({id:"sand", name:"The sandwich bar", emoji:"🥪", col:"#ffa47a", letter:"H", zone:1, skill:"Join it: the past",
+ init:function(st){ st.seq = pickIdx(SANDS.length, 5); st.jo = st.seq.map(function(){ return shuffle([0, 1, 2]); }); st.bo = st.seq.map(function(){ return shuffle([0, 1]); }); st.i = 0; st.n = 0; st.stage = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Make a sentence sandwich! First choose the filling: and, but or because. Then choose the bottom bread. Use the past. 🥪"));
+  var box = h("div"), last = null; el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var D = SANDS[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    if(last){ f.appendChild(last); last = null; }
+    var sand = h("div", {cls:"sand"}, [h("div", {cls:"bread"}, D.top),
+      h("div", {cls:"fill" + (st.stage > 0 ? " set" : "")}, st.stage > 0 ? JOIN[D.j] : "filling?"),
+      h("div", {cls:"bread bot", style:st.stage > 1 ? "" : "opacity:.35"}, st.stage > 1 ? D.bot[0] : "bottom bread?")]);
+    var ch = h("div", {cls:"choices"});
+    if(st.stage === 0){
+      st.jo[st.i].forEach(function(j){ var b = h("button", {cls:"ch"}, "🥬 " + JOIN[j]);
+        b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+          if(j === D.j){ st.stage = 1; save(); burst(["🥬", "🍅", "🧀"], b); step(); }
+          else { b.classList.add("wrong"); f.appendChild(fb(false, "That filling doesn't work. Read the two parts.")); } };
+        ch.appendChild(b); });
+    } else if(st.stage === 1){
+      st.bo[st.i].forEach(function(k){ var b = h("button", {cls:"ch wide"}, "🍞 " + D.bot[k]);
+        b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+          if(k === 0){ st.busy = true; st.stage = 2; st.i++; st.n++; save(); burst(["🥪", "✨", "⭐"], b);
+            st.stage = 2; var done = D; last = fb(true, "Yum! " + done.top + " " + JOIN[done.j] + " " + done.bot[0]);
+            showDone(done); setTimeout(function(){ st.stage = 0; st.busy = false; save(); step(); }, 1600); }
+          else { b.classList.add("wrong"); f.appendChild(fb(false, "Check the verb. It's finished, so use the past simple.")); } };
+        ch.appendChild(b); });
+    }
+    add(box, [dots(st.i, st.seq.length), sand, ch, f]);
+  }
+  function showDone(D){
+    box.innerHTML = "";
+    var f = h("div", {"aria-live":"polite"}); if(last){ f.appendChild(last); last = null; }
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"sand pop"}, [h("div", {cls:"bread"}, D.top), h("div", {cls:"fill set"}, JOIN[D.j]), h("div", {cls:"bread bot"}, D.bot[0])]), f]);
+  }
+  if(st.stage === 2) st.stage = 0;
+  step();
+ }});
+
+/* =====================================================================
+   6 THE KETTLE: past simple verbs
+   ===================================================================== */
+room({id:"kettle", name:"The kettle", emoji:"🫖", col:"#c39bff", letter:"Y", zone:0, skill:"Past simple verbs",
+ init:function(st){ st.seq = pickIdx(KETTLE.length, 8); st.oo = st.seq.map(function(){ return shuffle([0, 1, 2]); }); st.i = 0; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Boil the kettle for a cup of tea! Each right verb makes the water hotter. ☕"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    var pct = Math.round(st.i / 8 * 100);
+    var water = h("div", {cls:"kwater", style:"height:" + Math.max(12, pct) + "%"});
+    var kb = h("div", {cls:"kbody", "aria-hidden":"true"}, [water]);
+    if(st.i > 3) for(var b = 0; b < 4; b++) kb.appendChild(h("span", {cls:"bub", style:"left:" + (15 + b * 20) + "%;animation-delay:" + (b * .3) + "s"}));
+    var left = h("div", null, [h("div", {cls:"steam", "aria-hidden":"true"}, st.i >= 6 ? "♨️♨️" : st.i >= 3 ? "♨️" : ""), kb, h("div", {cls:"center small mute"}, pct + "°")]);
+    if(st.i >= st.seq.length){ add(box, h("div", {cls:"kettle"}, [left, h("div", {cls:"q"}, "🔔 Whistle! The tea is ready.")])); setTimeout(win, 600); return; }
+    var K = KETTLE[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var sentence = h("div", {cls:"ksent"}, [K.s.replace("___", "______"), " ", h("span", {cls:"base"}, "(" + K.b + ")")]);
+    var ch = h("div", {cls:"choices", style:"justify-content:flex-start"});
+    st.oo[st.i].forEach(function(k){ var b = h("button", {cls:"ch"}, K.o[k]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(k === 0){ st.busy = true; burst(["💧", "♨️", "✨"], b); f.appendChild(fb(true, K.b + " → " + K.o[0] + ". " + K.s.replace("___", K.o[0])));
+          st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 1300); }
+        else { b.classList.add("wrong"); f.appendChild(fb(false, "Not this one. " + K.b + " is irregular. Try again.")); } };
+      ch.appendChild(b); });
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"kettle"}, [left, h("div", null, [sentence, ch, f])])]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   7 THE LUNCHBOX: how, when, where
+   ===================================================================== */
+room({id:"bento", name:"The lunchbox", emoji:"🍱", col:"#ff8fc6", letter:"O", zone:1, skill:"How, when, where",
+ init:function(st){ var s = []; [0, 1, 2].forEach(function(g){ s = s.concat(shuffle(PHR.map(function(p, i){ return i; }).filter(function(i){ return PHR[i][1] === g; })).slice(0, 3)); }); st.seq = shuffle(s); st.placed = []; st.sel = null; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Pack the lunchbox! Tap a phrase. Then tap the right box: how, when or where? 🍱"));
+  var box = h("div"); el.appendChild(box);
+  function draw(msg){
+    box.innerHTML = "";
+    if(st.placed.length >= st.seq.length){ win(); return; }
+    var f = h("div", {"aria-live":"polite"}); if(msg) f.appendChild(msg);
+    var bento = h("div", {cls:"bento"});
+    BENTO.forEach(function(lab, g){
+      var b = h("button", {cls:"comp", "aria-label":"Put it in " + lab}, [h("span", {cls:"lab"}, ["🥢 ", "🍙 ", "🥟 "][g] + lab)].concat(
+        st.placed.filter(function(i){ return PHR[i][1] === g; }).map(function(i){ return h("span", {cls:"in"}, PHR[i][0]); })));
+      b.onclick = function(){ if(locked()) return;
+        if(st.sel == null){ shake(b); draw(fb(false, "Tap a phrase first. Then tap a box.")); return; }
+        var i = st.sel;
+        if(PHR[i][1] === g){ st.placed.push(i); st.sel = null; st.n++; save(); burst(["🍙", "✨"], b); draw(fb(true, PHR[i][0] + " answers " + lab)); }
+        else { st.sel = null; save(); draw(fb(false, PHR[i][0] + " doesn't go there. Does it say how, when or where?")); } };
+      bento.appendChild(b);
+    });
+    var chips = h("div", {cls:"chips"});
+    st.seq.forEach(function(i){ if(st.placed.indexOf(i) > -1) return;
+      chips.appendChild(h("button", {cls:"food" + (st.sel === i ? " sel" : ""), "aria-pressed":st.sel === i ? "true" : "false", onclick:function(){ st.sel = i; save(); draw(); }}, PHR[i][0])); });
+    add(box, [h("div", {cls:"small mute"}, "Packed: " + st.placed.length + " of " + st.seq.length), bento, chips, f]);
+  }
+  draw();
+ }});
+
+/* =====================================================================
+   8 THE DISHWASHER: on, at, in
+   ===================================================================== */
+room({id:"dish", name:"The dishwasher", emoji:"🍽️", col:"#5cc4ff", letter:"U", zone:0, skill:"on, at, in",
+ init:function(st){ var s = []; [0, 1, 2].forEach(function(g){ s = s.concat(shuffle(range(PLATES.length).filter(function(i){ return PLATES[i][1] === g; })).slice(0, 3)); }); st.seq = shuffle(s); st.placed = []; st.sel = null; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Put the plates in the dishwasher. Tap a plate. Then tap the rack: on, at or in? 🍽️"));
+  var box = h("div"); el.appendChild(box);
+  function draw(msg){
+    box.innerHTML = "";
+    if(st.placed.length >= st.seq.length){ win(); return; }
+    var f = h("div", {"aria-live":"polite"}); if(msg) f.appendChild(msg);
+    var dw = h("div", {cls:"dw"}, h("div", {cls:"small", style:"font-weight:800"}, "🔌 Dishwasher racks"));
+    RACKS.forEach(function(r, g){
+      var btn = h("button", {cls:"rl", "aria-label":"Rack " + r}, r);
+      btn.onclick = function(){ if(locked()) return;
+        if(st.sel == null){ shake(btn); draw(fb(false, "Tap a plate first. Then tap a rack.")); return; }
+        var i = st.sel;
+        if(PLATES[i][1] === g){ st.placed.push(i); st.sel = null; st.n++; save(); burst(["🫧", "✨"], btn); draw(fb(true, r + " " + PLATES[i][0] + ". Clean!")); }
+        else { st.sel = null; save(); draw(fb(false, "Not " + r + " " + PLATES[i][0] + ". Day or date: on. Time: at. Part of the day or how long: in.")); } };
+      dw.appendChild(h("div", {cls:"rack"}, [btn].concat(st.placed.filter(function(i){ return PLATES[i][1] === g; }).map(function(i){ return h("span", {cls:"pl"}, PLATES[i][0]); }))));
+    });
+    var pl = h("div", {cls:"plates"});
+    st.seq.forEach(function(i){ if(st.placed.indexOf(i) > -1) return;
+      pl.appendChild(h("button", {cls:"plate" + (st.sel === i ? " sel" : ""), "aria-pressed":st.sel === i ? "true" : "false", onclick:function(){ st.sel = i; save(); draw(); }}, PLATES[i][0])); });
+    add(box, [h("div", {cls:"small mute"}, "Clean plates: " + st.placed.length + " of " + st.seq.length), pl, dw, f]);
+  }
+  draw();
+ }});
+
+/* =====================================================================
+   9 THE FRUIT BOWL: question words
+   ===================================================================== */
+room({id:"fruit", name:"The fruit bowl", emoji:"🍎", col:"#c6f06a", letter:"L", zone:1, skill:"Ask the question",
+ init:function(st){ st.seq = pickIdx(FRUITQ.length, 6); st.fo = shuffle(range(FRUITW.length)); st.i = 0; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Ms Tran asks questions. Read the answer. Which question word fits? Tap the fruit. 🍓"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var Q = FRUITQ[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var qline = h("span", null, Q.q.replace("___", "______"));
+    var slip = h("div", {cls:"slip"}, [h("span", null, "❓ "), qline, h("span", {cls:"ans"}, "💬 " + Q.a)]);
+    var bowl = h("div", {cls:"bowl"});
+    st.fo.forEach(function(w){ var b = h("button", {cls:"fruit", style:"--fc:" + FRUITC[w]}, [h("span", {cls:"fe", "aria-hidden":"true"}, FRUITE[w]), FRUITW[w]]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(w === Q.k){ st.busy = true; qline.textContent = Q.q.replace("___", FRUITW[w]); burst([FRUITE[w], "✨"], b); f.appendChild(fb(true, "Yes! " + Q.q.replace("___", FRUITW[w])));
+          st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 1400); }
+        else { b.classList.remove("no"); void b.offsetWidth; b.classList.add("no"); f.appendChild(fb(false, FRUITW[w] + " doesn't match the answer. Look at the answer again.")); } };
+      bowl.appendChild(b); });
+    add(box, [dots(st.i, st.seq.length), slip, bowl, f]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   10 LOST AND FOUND: problem and fix memory game
+   ===================================================================== */
+room({id:"lost", name:"Lost and found", emoji:"📦", col:"#ffc94d", letter:"A", zone:1, skill:"Problems and fixes",
+ init:function(st){ var d = []; PAIRS.forEach(function(p, i){ d.push([i, 0]); d.push([i, 1]); }); st.deck = shuffle(d); st.got = []; st.up = []; st.n = 0; st.tries = 0; },
+ render:function(el, st, win){
+  add(el, hideko("The lost and found box is full of cards. Flip two cards. Find a problem and its fix. 🔍"));
+  var box = h("div"); el.appendChild(box);
+  var f = h("div", {"aria-live":"polite"});
+  function draw(){
+    box.innerHTML = "";
+    if(st.got.length >= PAIRS.length){ win(); return; }
+    var grid = h("div", {cls:"lfbox"});
+    st.deck.forEach(function(c, k){
+      var isUp = st.up.indexOf(k) > -1 || st.got.indexOf(c[0]) > -1;
+      var b = h("button", {cls:"mc" + (isUp ? " flip" : "") + (st.got.indexOf(c[0]) > -1 ? " got" : ""), "aria-label":isUp ? (c[1] ? "Fix: " : "Problem: ") + PAIRS[c[0]][c[1]] : "Card " + (k + 1) + ", face down"},
+        h("div", {cls:"in"}, [h("div", {cls:"face back", "aria-hidden":"true"}, "❔"),
+          h("div", {cls:"face front" + (c[1] ? " fix" : "")}, h("div", null, [h("span", {cls:"tag"}, c[1] ? "🔧 Fix" : "⚠️ Problem"), PAIRS[c[0]][c[1]]]))]));
+      b.onclick = function(){ if(locked() || st.busy || isUp) return;
+        st.up.push(k); f.innerHTML = ""; save(); draw();
+        if(st.up.length === 2){ st.busy = true; st.tries++;
+          var a = st.deck[st.up[0]], bb = st.deck[st.up[1]];
+          if(a[0] === bb[0] && a[1] !== bb[1]){ st.got.push(a[0]); st.n++; st.up = []; f.appendChild(fb(true, "A match! " + PAIRS[a[0]][1])); burst(["🔧", "✨", "⭐"]); save(); setTimeout(function(){ st.busy = false; draw(); }, 700); }
+          else { f.appendChild(fb(false, "Not a match. Remember them. Try again.")); setTimeout(function(){ st.up = []; st.busy = false; save(); draw(); }, 1500); } } };
+      grid.appendChild(b);
+    });
+    add(box, [h("div", {cls:"small mute"}, "Matches: " + st.got.length + " of " + PAIRS.length + "   ·   Tries: " + st.tries), grid]);
+  }
+  el.appendChild(f);
+  st.up = []; st.busy = false; draw();
+ }});
+
+/* =====================================================================
+   11 THE TOASTER: reply to a question and a comment
+   ===================================================================== */
+room({id:"toast", name:"The toaster", emoji:"🍞", col:"#ff6b5b", letter:"T", zone:0, skill:"Reply to your teacher",
+ init:function(st){ st.seq = pickIdx(TOAST.length, 4); st.oo = st.seq.map(function(){ return shuffle([0, 1, 2]); }); st.i = 0; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("Ms Tran sends a reply. Three toasts pop up. Choose the best answer. It says thanks and answers the question. 🍞"));
+  var box = h("div"); el.appendChild(box);
+  function step(){
+    box.innerHTML = "";
+    if(st.i >= st.seq.length){ win(); return; }
+    var T = TOAST[st.seq[st.i]], f = h("div", {"aria-live":"polite"});
+    var ts = h("div", {cls:"toasts"});
+    st.oo[st.i].forEach(function(k){ var b = h("button", {cls:"toast"}, T.o[k]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(k === 0){ st.busy = true; burst(["🍞", "🧈", "✨"], b); f.appendChild(fb(true, "Perfect toast! It says thanks and answers the question."));
+          st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; step(); }, 1400); }
+        else { b.classList.add("burnt"); f.appendChild(fb(false, /Dear|sincerely|lol/.test(T.o[k]) ? "Burnt! This isn't right for your teacher. Be friendly and polite." : "Burnt! Does it answer Ms Tran's question?")); } };
+      ts.appendChild(b); });
+    add(box, [dots(st.i, st.seq.length), h("div", {cls:"msg"}, [h("b", null, "Ms Tran"), T.m]), h("div", {cls:"toaster"}, [ts, h("div", {cls:"tbody", "aria-hidden":"true"})]), f]);
+  }
+  step();
+ }});
+
+/* =====================================================================
+   12 THE WHITEBOARD (teacher check): plan and write an idea email
+   ===================================================================== */
+room({id:"wb", name:"The whiteboard", emoji:"📋", col:"#5fe0a6", letter:"E", zone:2, teacher:true, skill:"Teacher check: write an email",
+ init:function(st){ st.ticks = {}; st.n = 0; },
+ render:function(el, st, win){
+  add(el, [hideko("There's a message on the whiteboard from Ms Tran. Write the email on paper. Then show your teacher. 🖊️"),
+    h("div", {cls:"wb"}, [h("h3", null, "Ideas, please!"), h("p", null, "Our class wants a good place near the college to buy lunch. Where can we go? Email me your idea."),
+      h("p", null, "1. Plan it first. Write notes: where, information about the place, how we can get there, why it's good."),
+      h("p", null, "2. Then write the email on paper. Use full sentences."), h("p", {style:"text-align:right;font-weight:800"}, "Ms Tran")])]);
+  var list = h("div"), gate = h("div"); add(el, [h("div", {class:"q"}, "✅ Check your email. Tap each thing you have:"), list, gate]);
+  function draw(){
+    list.innerHTML = ""; gate.innerHTML = ""; var n = 0;
+    WB.forEach(function(t, k){ if(st.ticks[k]) n++;
+      list.appendChild(h("button", {cls:"tick" + (st.ticks[k] ? " on" : ""), "aria-pressed":st.ticks[k] ? "true" : "false", onclick:function(){ st.ticks[k] = !st.ticks[k]; st.n = Object.keys(st.ticks).filter(function(x){ return st.ticks[x]; }).length; save(); draw(); }},
+        [h("span", {cls:"box", "aria-hidden":"true"}, st.ticks[k] ? "✓" : ""), h("span", null, t)])); });
+    if(n === WB.length) add(gate, [h("div", {cls:"panel note"}, [h("p", {style:"font-weight:900;margin:.1em 0"}, "👩‍🏫 Now show your plan and your email to your teacher."), h("p", {style:"margin:.1em 0"}, "Your teacher checks it. Then your teacher types the code.")]), keypad("6214", win)]);
+    else gate.appendChild(h("p", {cls:"mute"}, "Ticked: " + n + " of " + WB.length + ". Tick everything first."));
+  }
+  draw();
+ }});
+
+/* =====================================================================
+   13 THE INTERCOM (teacher check): speaking
+   ===================================================================== */
+room({id:"icom", name:"The intercom", emoji:"📢", col:"#c39bff", letter:"R", zone:2, teacher:true, skill:"Teacher check: say it, ask it",
+ init:function(st){ st.seq = range(ICOMQ.length); st.oo = st.seq.map(function(){ return shuffle([0, 1, 2]); }); st.i = 0; st.ticks = {}; st.n = 0; },
+ render:function(el, st, win){
+  add(el, hideko("There's an intercom on the wall! First practise. Say what's wrong, then ask. Then call your teacher. 📢"));
+  var p1 = h("div"), p2 = h("div"); add(el, [p1, p2]);
+  function warm(){
+    p1.innerHTML = "";
+    if(st.i >= st.seq.length){ p1.appendChild(fb(true, "Great asking! Now make the call.")); call(); return; }
+    var Q = ICOMQ[st.seq[st.i]], f = h("div", {"aria-live":"polite"}), ch = h("div", {cls:"choices", style:"justify-content:flex-start"});
+    st.oo[st.i].forEach(function(k){ var b = h("button", {cls:"ch wide", style:"text-align:left"}, Q.o[k]);
+      b.onclick = function(){ if(locked() || st.busy) return; f.innerHTML = "";
+        if(k === 0){ st.busy = true; burst(["📢", "✨"], b); f.appendChild(fb(true, "Clear! The problem, then a question.")); st.i++; st.n++; save(); setTimeout(function(){ st.busy = false; warm(); }, 1200); }
+        else { b.classList.add("wrong"); f.appendChild(fb(false, "Say the problem in a full sentence. Then ask a clear question.")); } };
+      ch.appendChild(b); });
+    add(p1, h("div", {cls:"icom"}, [h("div", {cls:"grille", "aria-hidden":"true"}), h("div", {cls:"small mute"}, "Practice " + (st.i + 1) + " of " + st.seq.length), h("div", {cls:"q", style:"margin:0"}, "⚠️ " + Q.t + " What do you say?"), ch, f]));
+  }
+  function call(){
+    p2.innerHTML = ""; var n = 0, list = h("div");
+    ICALL.forEach(function(t, k){ if(st.ticks[k]) n++;
+      list.appendChild(h("button", {cls:"tick" + (st.ticks[k] ? " on" : ""), "aria-pressed":st.ticks[k] ? "true" : "false", onclick:function(){ st.ticks[k] = !st.ticks[k]; save(); call(); }},
+        [h("span", {cls:"box", "aria-hidden":"true"}, st.ticks[k] ? "✓" : ""), h("span", null, t)])); });
+    add(p2, [h("div", {cls:"panel"}, [h("span", {cls:"ring", "aria-hidden":"true"}, "📞"), h("b", null, " Calling your teacher ... "), h("span", {cls:"small mute"}, "Work with a partner. Your teacher listens.")]),
+      h("div", {cls:"q"}, "✅ Tap each thing when you did it:"), list]);
+    if(n === ICALL.length) add(p2, [h("div", {cls:"panel note"}, h("p", {style:"font-weight:900;margin:.1em 0"}, "👩‍🏫 Your teacher listened? Your teacher types the code.")), keypad("3807", win)]);
+    else p2.appendChild(h("p", {cls:"mute"}, "Ticked: " + n + " of " + ICALL.length + "."));
+  }
+  warm();
+ }});
+
+/* ---------- teacher keypad ---------- */
+function keypad(code, onOk){
+  var cur = "", wrap = h("div", {cls:"panel center"}), show = h("div", {cls:"codeshow", "aria-live":"polite"}), msg = h("div");
+  function draw(){ show.innerHTML = ""; for(var i = 0; i < 4; i++) show.appendChild(h("span", null, cur.charAt(i) ? "•" : "")); }
+  function key(d){ if(cur.length >= 4) return; cur += d; draw();
+    if(cur.length === 4){ if(cur === code){ msg.innerHTML = ""; onOk(); } else { msg.innerHTML = ""; msg.appendChild(fb(false, "That code doesn't work. Ask your teacher.")); shake(show); setTimeout(function(){ cur = ""; draw(); }, 700); } } }
+  var kp = h("div", {cls:"keypad"});
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "C"].forEach(function(d){
+    kp.appendChild(h("button", {"aria-label":d === "⌫" ? "Delete" : d === "C" ? "Clear" : d, onclick:function(){ if(d === "⌫"){ cur = cur.slice(0, -1); draw(); } else if(d === "C"){ cur = ""; draw(); } else key(d); }}, d)); });
+  draw(); add(wrap, [h("div", {style:"font-weight:900"}, "🔢 Teacher's code"), show, kp, msg]); return wrap;
+}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+var main = document.getElementById("main");
+function setProg(){ document.getElementById("prog").textContent = "🧺 " + doneN() + " of " + ROOMS.length; }
+var VIEW = 0;
+function render(){
+  VIEW++; main.innerHTML = ""; setProg(); applySize(); window.scrollTo(0, 0);
+  if(S.v === "start") renderStart();
+  else if(S.v === "room" && byId(S.cur)) renderRoom(byId(S.cur));
+  else if(S.v === "door") renderDoor();
+  else if(S.v === "end") renderEnd();
+  else renderMap();
+  save();
+}
+document.getElementById("bMap").onclick = function(){ if(S.v === "start" || S.v === "end") return; S.v = "map"; S.cur = null; render(); };
+
+function renderStart(){
+  document.documentElement.style.setProperty("--rc", "var(--mustard)");
+  add(main, [
+    h("div", {cls:"menuboard"}, [
+      h("div", {cls:"clock"}, "🕐 1:00 pm"),
+      h("h1", null, "Locked in the lunchroom 🥪"),
+      h("p", null, "It's lunchtime in P Block. Your group is eating in the lunchroom. The door closes. Click! The lock is stuck."),
+      h("p", null, "Your phones have no signal in here. But Hideko is outside the door. Hideko can help with messages."),
+      h("p", null, "There are 13 stations in the lunchroom. Each station gives you a letter. Find all 13 letters. Then open the door. 🚪")]),
+    hideko("Don't worry. It is what it is. Read every clue. You can do it! 🙂"),
+    storeOK ? null : fb(false, "This screen can't save your work. Don't close the page until you escape."),
+    h("div", {cls:"panel"}, [
+      h("div", {style:"font-weight:900;margin-bottom:.3em"}, "✍️ Your group name"),
+      (function(){ var i = h("input", {cls:"namebox", type:"text", maxlength:"24", placeholder:"For example: The Toasties", "aria-label":"Your group name"}); i.value = S.team || ""; i.addEventListener("input", function(){ S.team = i.value; save(); }); return i; })(),
+      h("ul", null, [h("li", null, "Do the stations in any order."), h("li", null, "Two stations need your teacher. 👩‍🏫"), h("li", null, "Your work saves on this device.")]),
+      h("div", {cls:"row"}, [h("button", {cls:"bb go", onclick:function(){ if(!S.t0) S.t0 = Date.now(); S.v = "map"; render(); }}, S.t0 ? "▶ Go back in" : "🔓 Start"),
+        S.t0 ? restartBtn() : null])])]);
+}
+function restartBtn(){
+  return h("button", {cls:"bb sm", onclick:function(){ var b = this; if(b.getAttribute("data-a")){ var sz = S.size; S = fresh(); S.size = sz; save(); render(); } else { b.setAttribute("data-a", "1"); b.textContent = "Tap again to start the whole game again"; setTimeout(function(){ if(b.parentNode){ b.removeAttribute("data-a"); b.textContent = "↻ Start the whole game again"; } }, 3500); } }}, "↻ Start the whole game again");
+}
+
+var ZONES = ["🍳 The kitchen bench", "🪑 The tables", "🧱 The wall"];
+function renderMap(){
+  document.documentElement.style.setProperty("--rc", "var(--mustard)");
+  var n = doneN();
+  add(main, sign("🥪", S.team ? S.team + ": the lunchroom" : "The lunchroom", "Tap a station. Solve it. Get a letter.", false));
+  var anyStarted = n > 0 || ROOMS.some(started);
+  if(anyStarted) main.appendChild(h("div", {cls:"welcome"}, "👋 WELCOME BACK! You have " + n + " of " + ROOMS.length + " letters. Keep going."));
+  ZONES.forEach(function(z, zi){
+    main.appendChild(h("div", {cls:"zone"}, z));
+    var g = h("div", {cls:"stations"});
+    ROOMS.forEach(function(r){ if(r.zone !== zi) return;
+      var d = !!S.done[r.id], st = S.rs[r.id], go = !d && started(r);
+      g.appendChild(h("button", {cls:"st" + (d ? " done" : go ? "" : " locked"), style:"--sc:" + r.col, "aria-label":r.name + ": " + (d ? "open, letter " + r.letter : go ? "keep going" : "locked"),
+        onclick:function(){ if(locked()) return; S.v = "room"; S.cur = r.id; render(); }}, [
+        r.teacher ? h("span", {cls:"teach", title:"Teacher check"}, "👩‍🏫") : null,
+        h("span", {cls:"em", "aria-hidden":"true"}, r.emoji), h("span", {cls:"nm"}, r.name), h("span", {cls:"sk"}, r.skill),
+        h("span", {cls:"stat"}, d ? "✅ Open" : go ? "▶ Keep going (" + (st.n || 0) + " done)" : "🔒 Locked"),
+        d ? h("span", {cls:"lt"}, r.letter) : null]));
+    });
+    main.appendChild(g);
+  });
+  var tray = h("div", {cls:"tray"}, h("b", {style:"margin-right:.3em"}, "🧺 Your letters:"));
+  ROOMS.forEach(function(r){ tray.appendChild(S.done[r.id] ? h("span", {cls:"tl"}, r.letter) : h("span", {cls:"tl e"}, "?")); });
+  main.appendChild(h("div", {cls:"panel"}, tray));
+  var open = n === ROOMS.length;
+  main.appendChild(h("button", {cls:"exit" + (open ? " open" : ""), onclick:function(){ if(!open){ shake(this); return; } S.v = "door"; render(); }}, [
+    h("span", {cls:"em", "aria-hidden":"true"}, open ? "🚪✨" : "🚪🔒"),
+    h("span", null, open ? "The door. You have every letter. Open it!" : "The door is locked. Find all " + ROOMS.length + " letters first. (" + n + " of " + ROOMS.length + ")")]));
+  main.appendChild(h("div", {cls:"again"}, restartBtn()));
+}
+
+function renderRoom(r){
+  document.documentElement.style.setProperty("--rc", r.col);
+  add(main, sign(r.emoji, r.name, r.skill));
+  if(S.done[r.id]){ main.appendChild(unlocked(r, true)); return; }
+  var st = rs(r.id); if(!st.ready){ r.init(st); st.ready = true; save(); }
+  st.busy = false;
+  var body = h("div"); main.appendChild(body);
+  var won = false;
+  var token = ++VIEW;
+  r.render(body, st, function(){ if(won) return; won = true; S.done[r.id] = true; save(); setProg();
+    if(token !== VIEW || !body.isConnected) return;
+    burst(["🎉", "🔓", "✨", r.emoji]);
+    var u = unlocked(r, false); setTimeout(function(){ main.appendChild(u); u.scrollIntoView({behavior:REDUCED ? "auto" : "smooth", block:"center"}); }, 400); });
+}
+function unlocked(r, again){
+  return h("div", {cls:"unlock"}, [h("div", {cls:"big"}, again ? "This station is open. 🔓" : "Unlocked! 🔓🎉"), h("div", null, "Your letter:"), h("div", null, h("span", {cls:"lt"}, r.letter)),
+    h("div", {cls:"row", style:"justify-content:center;margin-top:.4em"}, h("button", {cls:"bb go", onclick:function(){ S.v = "map"; S.cur = null; render(); }}, "🥪 Back to the lunchroom"))]);
+}
+
+var CUPC = ["#ff6b5b", "#ffc94d", "#5fe0a6", "#5cc4ff", "#c39bff", "#ffa47a", "#ff8fc6", "#c6f06a"];
+function renderDoor(){
+  document.documentElement.style.setProperty("--rc", "var(--mint)");
+  if(doneN() < ROOMS.length){ S.v = "map"; render(); return; }
+  if(!S.door || !S.door.order){ S.door = {order:shuffle(range(ROOMS.length)), placed:[]}; save(); }
+  var D = S.door, slots = [5, 3, 5], f = h("div", {"aria-live":"polite"});
+  add(main, [sign("🚪", "The door", "Use your 13 letters"), hideko("The door has a word lock. The code is one of our expressions. It means: Goodbye. See you soon. Three words: 5 letters, 3 letters, 5 letters. 🤔")]);
+  var lock = h("div", {cls:"dlock"}), cups = h("div", {cls:"cups"});
+  add(main, [lock, f, cups, h("div", {cls:"row", style:"justify-content:center;margin-top:.6em"}, h("button", {cls:"bb sm", onclick:function(){ D.placed = []; f.innerHTML = ""; save(); draw(); }}, "↺ Clear the lock"))]);
+  function draw(){
+    lock.innerHTML = ""; var p = 0;
+    slots.forEach(function(n){ var w = h("div", {cls:"dword"}); for(var j = 0; j < n; j++){ var k = D.placed[p++]; w.appendChild(h("span", {cls:"dslot" + (k != null ? " full" : "")}, k != null ? ROOMS[k].letter : "")); } lock.appendChild(w); });
+    cups.innerHTML = "";
+    D.order.forEach(function(k, j){ var used = D.placed.indexOf(k) > -1;
+      cups.appendChild(h("button", {cls:"cup", style:"--cc:" + CUPC[j % CUPC.length], disabled:used ? "disabled" : null, "aria-label":"Letter " + ROOMS[k].letter, onclick:function(){ if(locked()) return; D.placed.push(k); save(); draw(); if(D.placed.length === ROOMS.length) check(); }}, ROOMS[k].letter)); });
+  }
+  function check(){
+    var word = D.placed.map(function(k){ return ROOMS[k].letter; }).join("");
+    f.innerHTML = "";
+    if(word === PHRASE){ S.tEnd = Date.now(); S.v = "end"; save(); lock.classList.add("open"); confetti(); setTimeout(render, 1000); }
+    else { shake(lock); f.appendChild(fb(false, "The lock doesn't open. Clear it and try again.")); }
+  }
+  draw();
+  if(D.placed.length === ROOMS.length) check();
+}
+function renderEnd(){
+  document.documentElement.style.setProperty("--rc", "var(--mint)");
+  add(main, [h("div", {style:"text-align:center;font-size:3rem;margin:.2em 0"}, "🚪🏃🎉"),
+    sign("🎉", "You're out!", (S.team || "Your group") + " escaped from the lunchroom", true),
+    h("div", {cls:"panel center"}, [h("p", {style:"font-size:1.3rem;font-weight:900;margin:.2em"}, "⏱️ Your time: " + fmt(S.tEnd - S.t0)),
+      h("p", null, "You opened all 13 stations and spelled CATCH YOU LATER."),
+      hideko("Happy days! You did it. Now finish your lunch. Catch you later! 🥪")]),
+    h("div", {cls:"row", style:"justify-content:center"}, [h("button", {cls:"bb go", onclick:function(){ confetti(); }}, "🎊 More confetti"), restartBtn()])]);
+  setTimeout(confetti, 200);
+}
+function confetti(){
+  var c = document.getElementById("conf"), x = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+  if(REDUCED) return;
+  var cols = ["#ff6b5b", "#ffc94d", "#5fe0a6", "#5cc4ff", "#c39bff", "#ffa47a", "#ff8fc6", "#c6f06a"], P = [];
+  for(var i = 0; i < 240; i++) P.push({x:Math.random() * c.width, y:-20 - Math.random() * c.height, w:8 + Math.random() * 8, hh:5 + Math.random() * 6, vy:2 + Math.random() * 4, vx:-1.5 + Math.random() * 3, r:Math.random() * 6, vr:-.2 + Math.random() * .4, c:cols[i % cols.length]});
+  var t0 = Date.now();
+  (function step(){ x.clearRect(0, 0, c.width, c.height); var alive = Date.now() - t0 < 7000;
+    for(var i = 0; i < P.length; i++){ var p = P[i]; p.y += p.vy; p.x += p.vx; p.r += p.vr; if(p.y > c.height && alive) p.y = -10;
+      x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.w / 2, -p.hh / 2, p.w, p.hh); x.restore(); }
+    if(Date.now() - t0 < 9000) requestAnimationFrame(step); else x.clearRect(0, 0, c.width, c.height); })();
+}
+
+/* ---------- start ---------- */
+if(S.v === "room" && !byId(S.cur)) S.v = "map";
+render();
+if(/[?&]test/.test(location.search)) window.__lr = {S:function(){ return S; }, ROOMS:ROOMS, D:{FRIDGE:FRIDGE, MAGNETS:MAGNETS, MICRO:MICRO, VEND:VEND, VJOBS:VJOBS, BELT:BELT, SANDS:SANDS, JOIN:JOIN, KETTLE:KETTLE, PHR:PHR, PLATES:PLATES, RACKS:RACKS, FRUITQ:FRUITQ, FRUITW:FRUITW, PAIRS:PAIRS, TOAST:TOAST, ICOMQ:ICOMQ}};
+})();
+</script>
+</body>
+</html>
